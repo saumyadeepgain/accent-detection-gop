@@ -14,6 +14,11 @@ from src.train import FocalLoss, make_loss
 
 NO_AUG = ["augment.enabled=false", "model.dropout=0.0"]
 
+# Softmax ignores a constant added to all of its inputs. The key bias of the
+# pretrained self-attention adds q·b_k to every score of a query, so its gradient
+# is zero by construction: only round-off, which is exactly 0.0 on some CPUs.
+GRADIENT_FREE_BY_DESIGN = ("attention.k_proj.bias",)
+
 
 def synthetic_batch(num_classes: int = 3, per_class: int = 2):
     """Variable-length clips (padding is part of what is being tested)."""
@@ -51,7 +56,11 @@ def test_25_steps_on_one_batch_drive_the_loss_down(overrides):
         if step == 0:
             missing = [n for n, p in trainable.items() if p.grad is None]
             dead = [
-                n for n, p in trainable.items() if p.grad is not None and p.grad.abs().sum() == 0
+                n
+                for n, p in trainable.items()
+                if p.grad is not None
+                and p.grad.abs().sum() == 0
+                and not n.endswith(GRADIENT_FREE_BY_DESIGN)
             ]
             assert not missing, f"no gradient reached: {missing[:5]}"
             assert not dead, f"all-zero gradient: {dead[:5]}"

@@ -287,8 +287,12 @@ class AttentiveStatsPooling(nn.Module):
 
     def __init__(self, dim: int, attention_dim: int):
         super().__init__()
+        # No bias on the scoring layer: a bias adds the same amount to every frame's
+        # score, which the softmax over frames cancels, so it could never learn.
         self.attention = nn.Sequential(
-            nn.Linear(3 * dim, attention_dim), nn.Tanh(), nn.Linear(attention_dim, 1)
+            nn.Linear(3 * dim, attention_dim),
+            nn.Tanh(),
+            nn.Linear(attention_dim, 1, bias=False),
         )
         self.out_dim = 2 * dim
 
