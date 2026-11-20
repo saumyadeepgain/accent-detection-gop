@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PIP_DISABLE_PIP_VERSION_CHECK: "1"
+  MPLBACKEND: Agg
+  OMP_NUM_THREADS: "2"
+  HF_HUB_OFFLINE: "1"  # tests build tiny models locally; never download from the Hub
+
+jobs:
+  lint:
+    name: Lint (ruff)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: Install ruff
+        run: pip install "ruff==0.16.9"
+      - name: Lint
+        run: ruff check --output-format=github .
+      - name: Check formatting
+        run: ruff format --check --diff .
+
+  test:
+    name: Tests (Python ${{ matrix.python-version }}, ${{ matrix.deps }} deps, CPU)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - python-version: "3.10"  # oldest supported: newest versions allowed by pyproject ranges
+            deps: range
+          - python-version: "3.13"  # the exact pins in requirements*.txt
+            deps: pinned
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: |
+            pyproject.toml
+            requirements*.txt
+      - name: Install espeak-ng (eSpeak G2P tests)
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq espeak-ng
+      - name: Install dependencies (pyproject ranges, CPU PyTorch)
+        if: matrix.deps == 'range'
+        run: |
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install -e ".[dev,espeak]"
+      - name: Install dependencies (pinned, CPU PyTorch)
+        if: matrix.deps == 'pinned'
+        run: |
+          pip install -r requirements.txt -r requirements-dev.txt \
+            --extra-index-url https://download.pytorch.org/whl/cpu
+          pip install --no-deps -e .
+      - name: Run tests
+        run: >-
+          pytest
+          --cov=src --cov-report=term-missing --cov-report=xml
+          --junitxml=pytest-report.xml
+      - name: Upload test and coverage reports
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: test-reports-py${{ matrix.python-version }}
+          path: |
+            coverage.xml
+            pytest-report.xml
+          if-no-files-found: ignore

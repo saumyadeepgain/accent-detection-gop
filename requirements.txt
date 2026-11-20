@@ -1,0 +1,13 @@
+# Runtime dependencies, pinned to the versions the test suite was verified with
+# (Python 3.13, Linux). For a CPU-only install of PyTorch use:
+#   pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu
+# g2p=espeak also needs the espeak-ng system package (apt install espeak-ng).
+torch==2.15.0
+numpy==2.5.3
+scipy==1.18.1
+soundfile==0.14.0
+PyYAML==6.0.3
+matplotlib==3.11.2
+transformers==5.23.0
+huggingface_hub==2.4.0
+phonemizer==3.6.0
