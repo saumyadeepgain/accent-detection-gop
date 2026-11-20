@@ -1,7 +1,7 @@
 """Build Section B – Feature Extraction / Preprocessing (Graphs 9-12)."""
 import json, uuid
 
-NB = "accent_gop_notebook.ipynb"
+NB = "notebooks/accent_gop_notebook.ipynb"
 
 def cell(src, cell_type="code"):
     return {"cell_type": cell_type, "id": uuid.uuid4().hex[:8], "metadata": {},

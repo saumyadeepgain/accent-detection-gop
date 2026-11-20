@@ -1,7 +1,7 @@
 """Build Sections I (39-44) + J (45-47) — Robustness + Final Summary."""
 import json, uuid
 
-NB = "accent_gop_notebook.ipynb"
+NB = "notebooks/accent_gop_notebook.ipynb"
 def cell(src, ct="code"):
     return {"cell_type": ct, "id": uuid.uuid4().hex[:8], "metadata": {},
             "source": src, **({"outputs": [], "execution_count": None} if ct == "code" else {})}
