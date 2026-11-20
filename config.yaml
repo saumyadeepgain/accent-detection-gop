@@ -1,0 +1,110 @@
+# Single source of truth for the accent-detection + GOP pipeline.
+# Every key can be overridden from the command line:
+#   python -m src.train --lr 3e-4 --batch_size 8 --set model.layers=[4,8]
+# Run `python -m src.train --help` for the full list of flags.
+
+seed: 42
+device: auto            # auto | cpu | cuda | cuda:N | mps
+deterministic: false    # true = deterministic cuDNN kernels (slower)
+
+audio:
+  sample_rate: 16000    # every model in the pipeline runs at this rate; inputs are resampled to it
+  mono: true            # multi-channel input is averaged to mono
+  trim_silence: true    # energy-based trim of leading/trailing silence
+  trim_top_db: 40.0     # frames quieter than (loudest frame - top_db) count as silence
+  normalize: true       # zero-mean / unit-variance per utterance (wav2vec2 / WavLM convention)
+  min_duration: 0.5     # seconds; shorter clips are dropped (training) or rejected (inference)
+  max_duration: 8.0     # seconds; training crops longer clips to this length
+  silence_rms_db: -60.0 # clips whose RMS (dBFS) is below this are treated as silent
+
+data:
+  manifest: data/manifest.csv   # CSV columns: path, speaker_id, accent [, source, text, gender]
+  audio_root: null              # relative manifest paths resolve against this (default: manifest folder)
+  accents: [Tamil, Telugu, Hindi, Kannada, Malayalam, Marathi, Bengali]
+  val_frac: 0.15                # fraction of each accent's SPEAKERS (never utterances)
+  test_frac: 0.15
+  test_sources: []              # e.g. [Svarah]: hold out whole corpora as a cross-corpus test set
+  split_file: null              # reuse a saved split (CSV); default: <out_dir>/split.csv
+  verify_audio: true            # decode every file once and drop unreadable / silent / too-short clips
+  num_workers: 2
+  bucket_by_length: true        # batch similar durations together to minimise padding
+
+augment:                        # training only; accent-safe (no pitch shift, no speed warping)
+  enabled: true
+  noise_prob: 0.5
+  noise_snr_db: [10.0, 30.0]    # additive noise at a random SNR in this range
+  noise_dir: null               # folder of noise recordings (e.g. MUSAN); null = synthetic coloured noise
+  gain_prob: 0.0                # off: per-utterance normalisation removes a constant gain anyway;
+  gain_db: [-6.0, 6.0]          # enable only for hf backbones with audio.normalize=false
+  spec_time_masks: 2            # SpecAugment on the features the head sees
+  spec_time_width: 0.05         # max width of each time mask, as a fraction of the valid frames
+  spec_freq_masks: 2
+  spec_freq_width: 0.08         # max width of each frequency/channel mask, as a fraction of channels
+
+model:
+  backbone: hf                  # hf (WavLM / wav2vec2 / HuBERT) | mel_cnn (small, from scratch, CPU-friendly)
+  hf_name: microsoft/wavlm-base-plus
+  hf_arch: wavlm                # wavlm | wav2vec2 | hubert (used to build a config when pretrained=false)
+  pretrained: true
+  hf_overrides: {}              # extra HF config fields, e.g. {hidden_dropout: 0.1}
+  layers: [6, 9]                # hidden states fused by a learned weighted sum (0 = CNN output)
+  freeze_backbone: false        # true = train only the pooling + head
+  freeze_feature_encoder: true  # keep the CNN waveform encoder frozen when fine-tuning
+  n_mels: 80                    # mel_cnn only
+  hidden_dim: 256               # mel_cnn width
+  pooling: attentive_stats      # attentive_stats | mean_std | mean (all masked)
+  attention_dim: 128
+  dropout: 0.2
+
+train:
+  epochs: 30
+  batch_size: 16
+  grad_accum_steps: 1
+  lr: 1.0e-3                    # pooling + head (and the whole mel_cnn backbone)
+  backbone_lr: 3.0e-5           # pretrained transformer layers (differential learning rate)
+  weight_decay: 0.01
+  warmup_ratio: 0.1             # linear warmup over this fraction of optimizer steps, then cosine decay
+  min_lr_ratio: 0.01            # cosine floor, relative to each group's peak LR
+  max_grad_norm: 5.0
+  amp: true                     # bf16 where supported, else fp16 + GradScaler (CUDA only)
+  loss: ce                      # ce | focal
+  focal_gamma: 2.0
+  class_weights: auto           # auto = inverse frequency on the training split | none
+  label_smoothing: 0.0          # ce only
+  patience: 6                   # early stopping on select_metric
+  min_delta: 0.001
+  select_metric: macro_f1       # macro_f1 | uar | accuracy
+  out_dir: runs/default
+  resume: null                  # path to last.pt to continue an interrupted run
+  log_every_n_steps: 20
+  calibrate: true               # fit a softmax temperature on the validation split after training
+  stop_after_epochs: null       # stop early (e.g. 1) while keeping the LR schedule of the full run
+
+eval:
+  batch_size: 16
+  segment_seconds: 6.0          # long recordings are scored in overlapping sections
+  segment_hop_seconds: 3.0
+  contested_agreement: 0.6      # below this fraction of agreeing sections the verdict is "contested"
+  ece_bins: 15
+
+gop:
+  phoneme_model: facebook/wav2vec2-xlsr-53-espeak-cv-ft  # CTC phoneme recogniser (eSpeak IPA vocabulary)
+  g2p: espeak                   # espeak (phonemizer + espeak-ng, matches the model vocabulary) | lexicon
+  lexicon: null                 # TSV "word<TAB>phone phone ..." for g2p=lexicon (phones in the model vocabulary)
+  language: en-us
+  exclude_blank: true           # renormalise frame posteriors over non-blank tokens
+  score_center: 0.0             # GOP-LPR value mapped to a score of 0.5
+  score_scale: 2.0              # logistic slope, in log-probability units
+  flag_threshold: 0.5           # phones scoring below this are flagged as likely mispronounced
+  word_aggregate: mean          # mean | min
+  unknown_phones: skip          # skip | error, for G2P symbols missing from the model vocabulary
+  rivals:                       # target phone -> substitutions typical of Indian-English L1 transfer
+    v: [w, ʋ]
+    w: [v, ʋ]
+    θ: [t, t̪]
+    ð: [d, d̪]
+    f: [p, pʰ]
+    z: [s, dʒ]
+    s: [ʃ]
+    ʃ: [s]
+    ɡ: [k]
