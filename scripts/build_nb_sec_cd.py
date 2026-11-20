@@ -1,7 +1,7 @@
 """Build Sections C + D — Model Architecture (13-15) + Training (16-19)."""
 import json, uuid
 
-NB = "accent_gop_notebook.ipynb"
+NB = "notebooks/accent_gop_notebook.ipynb"
 def cell(src, cell_type="code"):
     return {"cell_type": cell_type, "id": uuid.uuid4().hex[:8], "metadata": {},
             "source": src, **({"outputs": [], "execution_count": None} if cell_type == "code" else {})}

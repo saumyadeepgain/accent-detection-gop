@@ -1,7 +1,7 @@
 """Build Section A – Data Exploration / EDA (Graphs 1-8) into the notebook."""
 import json, uuid, os
 
-NB = "accent_gop_notebook.ipynb"
+NB = "notebooks/accent_gop_notebook.ipynb"
 
 def cell(src, cell_type="code"):
     return {
@@ -16,6 +16,9 @@ def md(src):
     return cell(src, "markdown")
 
 cells = []
+
+# ── DISCLAIMER ───────────────────────────────────────────────────────────────
+cells.append(md("> **Read this first: illustrative notebook, simulated data.** Every number and figure in this notebook is produced from synthetic or random data (the cells say *replace with real ...*), and several show an expected effect that was added by hand. None of them is a measured result. The working pipeline is in `src/` (see the README); real metrics come from `make eval` on your own speaker-disjoint split. `docs/AUDIT.md` lists which cells simulate what."))
 
 # ── NOTEBOOK HEADER ──────────────────────────────────────────────────────────
 cells.append(md("""# Accent Detection + Pronunciation Scoring (GoP) — Full Analysis Notebook
@@ -278,8 +281,18 @@ plt.tight_layout(); plt.show()
 print(src_counts)
 """))
 
-# ── WRITE TO NOTEBOOK ─────────────────────────────────────────────────────────
-nb = json.load(open(NB))
-nb["cells"].extend(cells)
+# ── WRITE A FRESH NOTEBOOK ────────────────────────────────────────────────────
+# Section A starts the build and the later sections append, so running all
+# builders in order always produces one copy of every cell.
+nb = {
+    "cells": cells,
+    "metadata": {
+        "kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"},
+        "language_info": {"name": "python", "version": "3.11.0"},
+    },
+    "nbformat": 4,
+    "nbformat_minor": 5,
+}
+os.makedirs(os.path.dirname(NB), exist_ok=True)
 json.dump(nb, open(NB, "w", encoding="utf-8"), indent=2)
 print(f"Section A written — {len(cells)} cells added. Total cells: {len(nb['cells'])}")

@@ -1,0 +1,15 @@
+{
+  "machine": {
+    "cpu": "x86_64",
+    "threads": 4,
+    "torch": "2.15.0+cu132",
+    "python": "3.13.18"
+  },
+  "accent_wavlm_base_plus_6s_clip_seconds": 0.444,
+  "accent_wavlm_base_plus_params_M": 73.8,
+  "padding_invariance_max_abs_logit_diff": 1.4528632164001465e-07,
+  "accent_mel_cnn_6s_clip_seconds": 0.0068,
+  "phoneme_xlsr53_large_5s_seconds": 0.684,
+  "phoneme_xlsr53_large_params_M": 315.8,
+  "forced_align_30s_300_phones_seconds": 0.036
+}

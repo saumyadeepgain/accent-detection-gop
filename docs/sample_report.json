@@ -1,0 +1,187 @@
+{
+  "models": {
+    "accent_checkpoint": "runs/demo/run/best.pt",
+    "phoneme_model": "(synthetic posteriors)",
+    "g2p": "lexicon",
+    "flag_threshold": 0.5
+  },
+  "results": [
+    {
+      "file": "hello_world (synthetic posteriors)",
+      "duration": 1.02,
+      "sample_rate": 16000,
+      "channels": 1,
+      "error": null,
+      "warnings": [],
+      "pronunciation": {
+        "transcript": "Hello world",
+        "error": null,
+        "unknown_phones": [],
+        "overall_score": 83.0,
+        "num_phones": 8,
+        "num_flagged": 1,
+        "words": [
+          {
+            "word": "hello",
+            "start": 0.24,
+            "end": 0.46,
+            "score": 0.9046,
+            "flagged": false,
+            "phones": [
+              {
+                "phone": "h",
+                "start": 0.24,
+                "end": 0.28,
+                "frames": 2,
+                "lpp": -0.0852,
+                "lpr": 4.4998,
+                "score": 0.9046,
+                "flagged": false,
+                "heard_as": "h",
+                "rivals": {},
+                "zero_length": false
+              },
+              {
+                "phone": "ə",
+                "start": 0.28,
+                "end": 0.34,
+                "frames": 2,
+                "lpp": -0.0852,
+                "lpr": 4.4998,
+                "score": 0.9046,
+                "flagged": false,
+                "heard_as": "ə",
+                "rivals": {},
+                "zero_length": false
+              },
+              {
+                "phone": "l",
+                "start": 0.34,
+                "end": 0.38,
+                "frames": 2,
+                "lpp": -0.0852,
+                "lpr": 4.4998,
+                "score": 0.9046,
+                "flagged": false,
+                "heard_as": "l",
+                "rivals": {},
+                "zero_length": false
+              },
+              {
+                "phone": "oʊ",
+                "start": 0.38,
+                "end": 0.46,
+                "frames": 3,
+                "lpp": -0.0852,
+                "lpr": 4.4998,
+                "score": 0.9046,
+                "flagged": false,
+                "heard_as": "oʊ",
+                "rivals": {},
+                "zero_length": false
+              }
+            ],
+            "unscored_phones": []
+          },
+          {
+            "word": "world",
+            "start": 0.64,
+            "end": 0.82,
+            "score": 0.7557,
+            "flagged": true,
+            "phones": [
+              {
+                "phone": "w",
+                "start": 0.64,
+                "end": 0.68,
+                "frames": 2,
+                "lpp": -1.8667,
+                "lpr": -1.6094,
+                "score": 0.309,
+                "flagged": true,
+                "heard_as": "v",
+                "rivals": {
+                  "v": -1.6094,
+                  "ʋ": 2.7081
+                },
+                "zero_length": false
+              },
+              {
+                "phone": "ɜː",
+                "start": 0.68,
+                "end": 0.74,
+                "frames": 3,
+                "lpp": -0.0852,
+                "lpr": 4.4998,
+                "score": 0.9046,
+                "flagged": false,
+                "heard_as": "ɜː",
+                "rivals": {},
+                "zero_length": false
+              },
+              {
+                "phone": "l",
+                "start": 0.74,
+                "end": 0.78,
+                "frames": 2,
+                "lpp": -0.0852,
+                "lpr": 4.4998,
+                "score": 0.9046,
+                "flagged": false,
+                "heard_as": "l",
+                "rivals": {},
+                "zero_length": false
+              },
+              {
+                "phone": "d",
+                "start": 0.78,
+                "end": 0.82,
+                "frames": 2,
+                "lpp": -0.0852,
+                "lpr": 4.4998,
+                "score": 0.9046,
+                "flagged": false,
+                "heard_as": "d",
+                "rivals": {},
+                "zero_length": false
+              }
+            ],
+            "unscored_phones": []
+          }
+        ],
+        "flagged": [
+          {
+            "word": "world",
+            "phone": "w",
+            "start": 0.64,
+            "end": 0.68,
+            "score": 0.309,
+            "heard_as": "v"
+          }
+        ],
+        "alignment": {
+          "frames": 51,
+          "frame_shift": 0.02,
+          "phones_per_second": 7.84
+        }
+      },
+      "accent": {
+        "label": "Tamil",
+        "confidence": 0.7574,
+        "probabilities": {
+          "Tamil": 0.7574,
+          "Telugu": 0.2181,
+          "Hindi": 0.0157,
+          "Bengali": 0.0037,
+          "Kannada": 0.0025,
+          "Marathi": 0.0015,
+          "Malayalam": 0.0012
+        },
+        "segments": 1,
+        "agreement": 1.0,
+        "verdict": "consistent",
+        "temperature": 1.0
+      }
+    }
+  ]
+}
